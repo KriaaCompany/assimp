@@ -506,6 +506,22 @@ TEST_F(utglTF2ImportExport, bug_import_simple_skin) {
     EXPECT_NE(nullptr, scene);
 }
 
+// A skin without inverseBindMatrices is valid glTF 2.0: every joint then has an identity inverse bind matrix.
+TEST_F(utglTF2ImportExport, import_skin_without_inverse_bind_matrices) {
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/glTF2/simple_skin/simple_skin_no_inverse_bind.gltf",
+            aiProcess_ValidateDataStructure);
+    ASSERT_NE(nullptr, scene);
+    bool foundBone = false;
+    for (unsigned int m = 0; m < scene->mNumMeshes; ++m) {
+        for (unsigned int b = 0; b < scene->mMeshes[m]->mNumBones; ++b) {
+            foundBone = true;
+            EXPECT_EQ(aiMatrix4x4(), scene->mMeshes[m]->mBones[b]->mOffsetMatrix);
+        }
+    }
+    EXPECT_TRUE(foundBone);
+}
+
 bool checkSkinnedScene(const aiScene *scene){
     float eps = 0.001f;
     bool result = true;

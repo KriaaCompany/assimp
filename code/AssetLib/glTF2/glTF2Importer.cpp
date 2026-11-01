@@ -1198,8 +1198,11 @@ aiNode *glTF2Importer::ImportNode(glTF2::Asset &r, glTF2::Ref<glTF2::Node> &ptr)
                     // we then need to reconvert the data back into the vertex-to-bone
                     // mapping which makes things doubly-slow.
 
+                    // inverseBindMatrices is optional: without it the glTF 2.0 spec says every joint uses an identity matrix.
                     mat4 *pbindMatrices = nullptr;
-                    node.skin->inverseBindMatrices->ExtractData(pbindMatrices, nullptr);
+                    if (node.skin->inverseBindMatrices) {
+                        node.skin->inverseBindMatrices->ExtractData(pbindMatrices, nullptr);
+                    }
 
                     for (uint32_t i = 0; i < numBones; ++i) {
                         const std::vector<aiVertexWeight> &weights = weighting[i];
@@ -1216,7 +1219,11 @@ aiNode *glTF2Importer::ImportNode(glTF2::Asset &r, glTF2::Ref<glTF2::Node> &ptr)
                             bone->mName = (kDefaultName + postfix);
                         }
                         GetNodeTransform(bone->mOffsetMatrix, *joint);
-                        CopyValue(pbindMatrices[i], bone->mOffsetMatrix);
+                        if (pbindMatrices) {
+                            CopyValue(pbindMatrices[i], bone->mOffsetMatrix);
+                        } else {
+                            bone->mOffsetMatrix = aiMatrix4x4();
+                        }
                         bone->mNumWeights = static_cast<uint32_t>(weights.size());
 
                         if (bone->mNumWeights > 0) {
